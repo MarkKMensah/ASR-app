@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,10 +62,48 @@ class LoginPage extends StatelessWidget {
               child: Text(
                 'LOGIN',
                 style: TextStyle(
+
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
+              ),
+            ),
+            SizedBox(height: 24),
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/home');
+              },
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 80, vertical: 16),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min, // This will make the Row wrap its contents
+                mainAxisAlignment: MainAxisAlignment.center, // Center the children
+                children: [
+                  Image.asset(
+                    'assets/google.png', // Make sure to add this to your pubspec.yaml
+                    height: 24, // Adjust size as needed
+                    width: 24,
+                  ),
+                  SizedBox(width: 12), // Add some spacing between logo and text
+                  Text(
+                    'Log in with google',
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
+
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 24),
@@ -81,7 +122,7 @@ class LoginPage extends StatelessWidget {
                     Navigator.pushNamed(context, '/signup');
                   },
                   child: Text(
-                    'SIGN UP',
+                    'Sign up',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

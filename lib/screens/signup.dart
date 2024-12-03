@@ -72,10 +72,10 @@ class SignUpPage extends StatelessWidget {
             // Sign Me Up Button
             ElevatedButton(
               onPressed: () {
-                print('Sign Up button pressed');
+                Navigator.pushNamed(context, '/brief');
               },
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: 130, vertical: 16),
                 backgroundColor: Colors.black, // Button color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -91,6 +91,43 @@ class SignUpPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16), // Spacing
+            OutlinedButton(
+              onPressed: () {
+                print("sign up with google pressed");
+              },
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 80, vertical: 16),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min, // This will make the Row wrap its contents
+                mainAxisAlignment: MainAxisAlignment.center, // Center the children
+                children: [
+                  Image.asset(
+                    'assets/google.png', // Make sure to add this to your pubspec.yaml
+                    height: 24, // Adjust size as needed
+                    width: 24,
+                  ),
+                  SizedBox(width: 12), // Add some spacing between logo and text
+                  Text(
+                    'Sign up with google',
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
+
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
             // Already Have an Account? Login
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -104,7 +141,7 @@ class SignUpPage extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pop(context); // Navigate back to Login Page
+                    Navigator.pushNamed(context, '/login');
                   },
                   child: Text(
                     'Login',
@@ -118,28 +155,7 @@ class SignUpPage extends StatelessWidget {
               ],
             ),
             SizedBox(height: 24), // Spacing
-            // Sign Up with Google Button
-            ElevatedButton.icon(
-              onPressed: () {
-                print('Sign Up with Google button pressed');
-              },
-              icon: Icon(Icons.g_translate, color: Colors.white),
-              label: Text(
-                'Sign Up with Google',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                backgroundColor: Colors.red[600], // Google button color
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+
             SizedBox(height: 16), // Bottom padding
           ],
         ),

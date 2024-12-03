@@ -33,6 +33,7 @@ dependencies:
   audioplayers: ^6.1.0
   record: ^5.2.0
   path_provider: ^2.0.15
+  smooth_page_indicator: ^1.1.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -69,6 +70,11 @@ flutter:
     - assets/asr_logo.jpg
     - assets/record.jpg
     - assets/history.jpg
+    - assets/google.png
+    - assets/intro.png
+    - assets/ghana.png
+    - assets/ladyanim.png
+    - assets/ranking.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
