@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 
-class BriefingPage extends StatelessWidget {
-  const BriefingPage({super.key});
+class LegonintroPage extends StatelessWidget {
+  const LegonintroPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        shadowColor: Colors.white,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -14,13 +25,6 @@ class BriefingPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             const SizedBox(height: 50),
-            const Text("Let's get you up to speed:",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600
-              ),
-              textAlign: TextAlign.left,
-            ),
             Image.asset(
               'assets/record.jpg',
               height: 250,
@@ -30,7 +34,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "What is this project about?",
+              "Who We Are",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -39,7 +43,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "We are creating a speech recognition system for the Akan language, tailored for healthcare settings. Your participation helps us bridge language barriers in healthcare delivery.",
+              "This project is led by the HCI-LAB at the Department of Computer Science, University of Ghana. Our lab specializes in Human-Computer Interaction, leveraging cutting-edge technology to address real-world challenges.",
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -56,7 +60,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "How does it work?",
+              "Meet the Team",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -65,7 +69,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              "You’ll read selected healthcare-related text phrases in Akan, record your voice, and submit the recordings through this app. These recordings will be used to train our speech recognition model." ,
+              "The project is spearheaded by Mark Mensah, a PhD researcher at the HCI-LAB, under the expert guidance of Prof. Isaac Wiafe. The team also includes passionate MSc students and researchers dedicated to advancing impactful solutions" ,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -82,7 +86,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "Why is it important?",
+              "Our Mission",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -91,7 +95,16 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              "This project will help improve communication between patients and healthcare providers, making healthcare services more accessible and effective for Akan speakers.",
+              "We strive to improve healthcare accessibility for Akan-speaking communities by developing innovative technology that bridges critical language barriers in healthcare settings",
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.left,
+            ),
+            const SizedBox(height: 18),
+            Text(
+                  "By combining research, technology, and community engagement, we aim to transform communication between patients and healthcare providers, ensuring better care for all.",
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -107,14 +120,17 @@ class BriefingPage extends StatelessWidget {
                 Navigator.pushNamed(context, '/terms');
               },
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 150, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: 90, vertical: 16),
                 backgroundColor: Colors.black, // Button color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(
-                'Next',
+                'How do I contribute?',
+                softWrap: false,
+                overflow: TextOverflow.visible,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

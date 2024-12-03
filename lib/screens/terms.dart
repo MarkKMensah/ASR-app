@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
 
-class BriefingPage extends StatelessWidget {
-  const BriefingPage({super.key});
+class TermsPage extends StatelessWidget {
+  const TermsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        shadowColor: Colors.white,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            const SizedBox(height: 50),
-            const Text("Let's get you up to speed:",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600
-              ),
-              textAlign: TextAlign.left,
-            ),
+
             Image.asset(
               'assets/record.jpg',
               height: 250,
@@ -30,7 +34,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "What is this project about?",
+              "Your Privacy Matters",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -39,7 +43,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "We are creating a speech recognition system for the Akan language, tailored for healthcare settings. Your participation helps us bridge language barriers in healthcare delivery.",
+              "All data collected will be used solely for research purposes. We are committed to ensuring your privacy and security.",
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -56,7 +60,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "How does it work?",
+              "Anonymity Guaranteed",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -65,7 +69,7 @@ class BriefingPage extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              "You’ll read selected healthcare-related text phrases in Akan, record your voice, and submit the recordings through this app. These recordings will be used to train our speech recognition model." ,
+              "Your recordings will be anonymized and stored securely. No personally identifiable information will be associated with the data." ,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -73,25 +77,8 @@ class BriefingPage extends StatelessWidget {
               textAlign: TextAlign.left,
             ),
             const SizedBox(height: 30),
-            Image.asset(
-              'assets/record.jpg',
-              height: 250,
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-
-            ),
-            const SizedBox(height: 10),
             Text(
-              "Why is it important?",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              "This project will help improve communication between patients and healthcare providers, making healthcare services more accessible and effective for Akan speakers.",
+              "By proceeding, you consent to your data being used for research in strict adherence to legal and ethical standards.",
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -104,17 +91,20 @@ class BriefingPage extends StatelessWidget {
             // Sign Me Up Button
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/terms');
+                Navigator.pushNamed(context, '/legon');
               },
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 150, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: 80, vertical: 16),
                 backgroundColor: Colors.black, // Button color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(
-                'Next',
+                'I Understand and Agree',
+                softWrap: false,
+                overflow: TextOverflow.visible,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
