@@ -48,62 +48,79 @@ class LoginPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/home'); // Navigate to home
-              },
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 150, vertical: 16),
-                backgroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'LOGIN',
-                style: TextStyle(
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
 
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            SizedBox(height: 24),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/home');
-              },
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 80, vertical: 16),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min, // This will make the Row wrap its contents
-                mainAxisAlignment: MainAxisAlignment.center, // Center the children
-                children: [
-                  Image.asset(
-                    'assets/google.png', // Make sure to add this to your pubspec.yaml
-                    height: 24, // Adjust size as needed
-                    width: 24,
+                    Navigator.pushReplacementNamed(context, '/home');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  SizedBox(width: 12), // Add some spacing between logo and text
-                  Text(
-                    'Log in with google',
-                    softWrap: false,
-                    overflow: TextOverflow.visible,
-                    textAlign: TextAlign.center,
-
+                  child: const Text(
+                    'Log In',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ),
-                ],
+                ),
+              ),
+            ),
+            SizedBox(height: 16), // Spacing
+
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    print("sign up with google pressed");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 90, vertical: 16),
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min, // This will make the Row wrap its contents
+                    mainAxisAlignment: MainAxisAlignment.center, // Center the children
+                    children: [
+                      Image.asset(
+                        'assets/google.png', // Make sure to add this to your pubspec.yaml
+                        height: 24, // Adjust size as needed
+                        width: 24,
+                      ),
+                      SizedBox(width: 12), // Add some spacing between logo and text
+                      Text(
+                        'Log in with google',
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        textAlign: TextAlign.center,
+
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             SizedBox(height: 24),

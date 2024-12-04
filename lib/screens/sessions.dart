@@ -16,12 +16,30 @@ class _SessionScreenState extends State<SessionScreen> {
   bool _isRecording = false;
   String _errorMessage = '';
   Duration _recordDuration = Duration.zero;
+  List<Map<String, dynamic>> prompts = [];
+  int currentPromptIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _loadPrompts();
     _checkPermissions();
     _startTimer();
+  }
+
+  Future<void> _loadPrompts() async {
+    setState(() {
+      prompts = [
+        {"title": "Dwen Hwɛ Kan", "english": "Think before you speak"},
+        {"title": "Me ma wo akye", "english": "Good morning"},
+        {"title": "Wo ho te sɛn", "english": "How are you?"},
+        {"title": "Me da wo ase", "english": "Thank you"},
+        {"title": "Yɛ bɛ hyia bio", "english": "We'll meet again"},
+        {"title": "Me te aseɛ", "english": "I understand"},
+        {"title": "Me suro", "english": "I am afraid"},
+        {"title": "Ɛyɛ", "english": "It is good"}
+      ];
+    });
   }
 
   void _startTimer() {
@@ -53,7 +71,6 @@ class _SessionScreenState extends State<SessionScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'Error checking permissions: $e';
-        print('Error checking permissions: $e');
       });
     }
   }
@@ -67,7 +84,6 @@ class _SessionScreenState extends State<SessionScreen> {
         return;
       }
 
-      // Get the application documents directory
       final directory = await getApplicationDocumentsDirectory();
       final path = '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
@@ -92,7 +108,6 @@ class _SessionScreenState extends State<SessionScreen> {
         _errorMessage = 'Error starting recording: $e';
         _isRecording = false;
       });
-      print('Recording error: $e');
     }
   }
 
@@ -109,7 +124,6 @@ class _SessionScreenState extends State<SessionScreen> {
         _errorMessage = 'Error stopping recording: $e';
         _isRecording = false;
       });
-      print('Stop recording error: $e');
     }
   }
 
@@ -126,7 +140,6 @@ class _SessionScreenState extends State<SessionScreen> {
       setState(() {
         _errorMessage = 'Error playing audio: $e';
       });
-      print('Playback error: $e');
     }
   }
 
@@ -146,7 +159,6 @@ class _SessionScreenState extends State<SessionScreen> {
       setState(() {
         _errorMessage = 'Error deleting recording: $e';
       });
-      print('Delete error: $e');
     }
   }
 
@@ -166,9 +178,7 @@ class _SessionScreenState extends State<SessionScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pushNamed(context, "/home"),
         ),
         title: Text(
           'Session 1',
@@ -183,11 +193,8 @@ class _SessionScreenState extends State<SessionScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Text(
-              '1/8',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-              ),
+              '${currentPromptIndex + 1}/${prompts.length}',
+              style: TextStyle(color: Colors.black, fontSize: 16),
             ),
           ),
         ],
@@ -196,17 +203,16 @@ class _SessionScreenState extends State<SessionScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Progress Indicator
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(
-                8,
+                prompts.length,
                     (index) => Expanded(
                   child: Container(
                     margin: EdgeInsets.symmetric(horizontal: 2),
                     height: 4,
                     decoration: BoxDecoration(
-                      color: index == 0 ? Colors.black : Colors.grey[300],
+                      color: index <= currentPromptIndex ? Colors.black : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -215,28 +221,27 @@ class _SessionScreenState extends State<SessionScreen> {
             ),
             SizedBox(height: 24),
 
-            // Session Title with Play Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            if (prompts.isNotEmpty) Column(
               children: [
                 Text(
-                  'Dwen Hwɛ Kan',
+                  prompts[currentPromptIndex]['title'],
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
-                if (_audioPath != null)
-                  IconButton(
-                    icon: Icon(Icons.play_arrow, color: Colors.black),
-                    onPressed: _playAudio,
+                SizedBox(height: 8),
+                Text(
+                  prompts[currentPromptIndex]['english'],
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[600],
                   ),
+                ),
               ],
             ),
             SizedBox(height: 24),
 
-            // Error Message
             if (_errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
@@ -250,49 +255,52 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
               ),
 
-            // Audio Display Box
             Container(
-              height: 120,
+              height: 190,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
-                child: Text(
-                  _isRecording
-                      ? 'Recording... ${_formatDuration(_recordDuration)}'
-                      : _audioPath != null
-                      ? 'Recording saved'
-                      : 'Ready to record',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.grey[700],
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _isRecording
+                          ? 'Recording... ${_formatDuration(_recordDuration)}'
+                          : _audioPath != null
+                          ? 'Recording saved'
+                          : 'Ready to record',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    if (_audioPath != null && !_isRecording)
+                      IconButton(
+                        icon: Icon(Icons.play_arrow),
+                        onPressed: _playAudio,
+                      ),
+                  ],
                 ),
               ),
             ),
             Spacer(),
 
-            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.delete,
-                      size: 32,
-                      color: _audioPath != null ? Colors.grey[700] : Colors.grey[300]
+                  icon: Icon(
+                    Icons.delete,
+                    size: 32,
+                    color: _audioPath != null ? Colors.grey[700] : Colors.grey[300],
                   ),
                   onPressed: _audioPath != null ? _deleteRecording : null,
                 ),
                 FloatingActionButton(
                   backgroundColor: _isRecording ? Colors.red : Colors.black,
-                  onPressed: () {
-                    if (_isRecording) {
-                      _stopRecording();
-                    } else {
-                      _startRecording();
-                    }
-                  },
+                  onPressed: _isRecording ? _stopRecording : _startRecording,
                   child: Icon(
                     _isRecording ? Icons.stop : Icons.mic,
                     size: 32,
@@ -300,14 +308,21 @@ class _SessionScreenState extends State<SessionScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send,
-                      size: 32,
-                      color: _audioPath != null ? Colors.grey[700] : Colors.grey[300]
+                  icon: Icon(
+                    Icons.send,
+                    size: 32,
+                    color: _audioPath != null ? Colors.grey[700] : Colors.grey[300],
                   ),
                   onPressed: _audioPath != null
                       ? () {
-                    print('Sending audio: $_audioPath');
-                    // Implement your send logic here
+                    if (currentPromptIndex < prompts.length - 1) {
+                      setState(() {
+                        currentPromptIndex++;
+                        _audioPath = null;
+                      });
+                    } else {
+                      Navigator.pushNamed(context, "/home");
+                    }
                   }
                       : null,
                 ),

@@ -3,146 +3,111 @@ import 'package:flutter/material.dart';
 class LegonintroPage extends StatelessWidget {
   const LegonintroPage({super.key});
 
+  Widget _buildSection({
+    required String imagePath,
+    required String title,
+    required String content,
+    String? additionalContent,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Image.asset(
+          imagePath,
+          height: 250,
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          content,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+          ),
+        ),
+        if (additionalContent != null) ...[
+          const SizedBox(height: 18),
+          Text(
+            additionalContent,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+        const SizedBox(height: 30),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        shadowColor: Colors.white,
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             const SizedBox(height: 50),
-            Image.asset(
-              'assets/record.jpg',
-              height: 250,
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-
+            _buildSection(
+              imagePath: 'assets/legon.png',
+              title: 'Who We Are',
+              content: 'This project is led by the HCI-LAB at the Department of Computer Science, University of Ghana. Our lab specializes in Human-Computer Interaction, leveraging cutting-edge technology to address real-world challenges.',
             ),
-            const SizedBox(height: 10),
-            Text(
-              "Who We Are",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.left,
+            _buildSection(
+              imagePath: 'assets/team.png',
+              title: 'Meet the Team',
+              content: 'The project is spearheaded by Mark Mensah, a PhD researcher at the HCI-LAB, under the expert guidance of Prof. Isaac Wiafe. The team also includes passionate MSc students and researchers dedicated to advancing impactful solutions',
             ),
-            const SizedBox(height: 10),
-            Text(
-              "This project is led by the HCI-LAB at the Department of Computer Science, University of Ghana. Our lab specializes in Human-Computer Interaction, leveraging cutting-edge technology to address real-world challenges.",
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.left,
+            _buildSection(
+              imagePath: 'assets/progress.png',
+              title: 'Our Mission',
+              content: 'We strive to improve healthcare accessibility for Akan-speaking communities by developing innovative technology that bridges critical language barriers in healthcare settings',
+              additionalContent: 'By combining research, technology, and community engagement, we aim to transform communication between patients and healthcare providers, ensuring better care for all.',
             ),
-            const SizedBox(height: 30),
-            Image.asset(
-              'assets/record.jpg',
-              height: 250,
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Meet the Team",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              "The project is spearheaded by Mark Mensah, a PhD researcher at the HCI-LAB, under the expert guidance of Prof. Isaac Wiafe. The team also includes passionate MSc students and researchers dedicated to advancing impactful solutions" ,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            const SizedBox(height: 30),
-            Image.asset(
-              'assets/record.jpg',
-              height: 250,
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Our Mission",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              "We strive to improve healthcare accessibility for Akan-speaking communities by developing innovative technology that bridges critical language barriers in healthcare settings",
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            const SizedBox(height: 18),
-            Text(
-                  "By combining research, technology, and community engagement, we aim to transform communication between patients and healthcare providers, ensuring better care for all.",
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.left,
-            ),
-
-
-            SizedBox(height: 30), // Spacing
-            // Sign Me Up Button
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/terms');
-              },
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 90, vertical: 16),
-                backgroundColor: Colors.black, // Button color
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pushReplacementNamed(context, '/survey'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              ),
-              child: Text(
-                'How do I contribute?',
-                softWrap: false,
-                overflow: TextOverflow.visible,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                child: const Text(
+                  'How do I contribute?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ),
       ),
-
     );
   }
 }

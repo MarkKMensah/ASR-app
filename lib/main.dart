@@ -7,6 +7,7 @@ import 'package:asr_data/screens/secondIntro.dart';
 import 'package:asr_data/screens/sessions.dart';
 import 'package:asr_data/screens/signup.dart';
 import 'package:asr_data/screens/splashScreen.dart';
+import 'package:asr_data/screens/survey.dart';
 import 'package:asr_data/screens/terms.dart';
 import 'package:flutter/material.dart';
 
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(),
         '/session': (context) => SessionScreen(),
         '/terms': (context) => TermsPage(),
-        '/legon': (context) => LegonintroPage()
+        '/legon': (context) => LegonintroPage(),
+        '/survey': (context) => SurveyForm()
 
       },
     );

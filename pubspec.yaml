@@ -69,12 +69,22 @@ flutter:
   assets:
     - assets/asr_logo.jpg
     - assets/record.jpg
+    - assets/qna.png
+    - assets/qnatwo.png
+    - assets/qnathree.png
     - assets/history.jpg
     - assets/google.png
+    - assets/micro.jpg
     - assets/intro.png
     - assets/ghana.png
     - assets/ladyanim.png
     - assets/ranking.png
+    - assets/legon.png
+    - assets/padlock.png
+    - assets/progress.png
+    - assets/team.png
+    - assets/sealips.png
+    - assets/surveymodal.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
