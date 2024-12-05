@@ -1,3 +1,5 @@
+import 'package:asr_data/models/UserDetails.dart';
+import 'package:asr_data/services/UserService.dart';
 import 'package:flutter/material.dart';
 
 class SurveyForm extends StatefulWidget {
@@ -22,6 +24,8 @@ class _SurveyFormState extends State<SurveyForm> {
   final TextEditingController occupationController = TextEditingController();
   final TextEditingController otherTribeController = TextEditingController();
 
+  final UserDetailsService _userDetailsService = UserDetailsService();
+
   @override
   void dispose() {
     institutionController.dispose();
@@ -45,6 +49,46 @@ class _SurveyFormState extends State<SurveyForm> {
 
   List<String> tribes = ['Akan', 'Ewe', 'Ga', 'Dagbani', 'Other'];
 
+  void _submitSurvey() async {
+    // Prepare the user details model
+    UserDetailsModel userDetails = UserDetailsModel(
+      institutionOccupation: isStudent! 
+        ? institutionController.text 
+        : occupationController.text,
+      nativeLanguage: isAkanSpeaker! 
+        ? 'Akan' 
+        : (tribe == 'Other' ? otherTribeController.text : tribe!),
+      proficiency: isAkanSpeaker! ? proficiencyLevel : null,
+      gender: gender!,
+      dateOfBirth: dateOfBirth!,
+    );
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    // Submit the details
+    bool success = await _userDetailsService.submitUserDetails(userDetails);
+
+    // Remove loading indicator
+    Navigator.of(context).pop();
+
+    if (success) {
+      showThankYouDialog();
+    } else {
+      // Show error dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to submit survey. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget buildSelectionButton(String text, bool isSelected, VoidCallback onPressed) {
     return OutlinedButton(
       onPressed: onPressed,
@@ -62,7 +106,6 @@ class _SurveyFormState extends State<SurveyForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         const Text('Are you a student?'),
         const SizedBox(height: 8),
         Row(
@@ -70,7 +113,7 @@ class _SurveyFormState extends State<SurveyForm> {
             buildSelectionButton(
               'Yes',
               isStudent == true,
-                  () => setState(() {
+              () => setState(() {
                 isStudent = true;
                 occupation = null;
               }),
@@ -79,7 +122,7 @@ class _SurveyFormState extends State<SurveyForm> {
             buildSelectionButton(
               'No',
               isStudent == false,
-                  () => setState(() {
+              () => setState(() {
                 isStudent = false;
                 institution = null;
               }),
@@ -138,7 +181,7 @@ class _SurveyFormState extends State<SurveyForm> {
             buildSelectionButton(
               'Yes',
               isAkanSpeaker == true,
-                  () => setState(() {
+              () => setState(() {
                 isAkanSpeaker = true;
                 tribe = null;
                 otherTribe = null;
@@ -148,7 +191,7 @@ class _SurveyFormState extends State<SurveyForm> {
             buildSelectionButton(
               'No',
               isAkanSpeaker == false,
-                  () => setState(() {
+              () => setState(() {
                 isAkanSpeaker = false;
                 proficiencyLevel = null;
               }),
@@ -352,7 +395,7 @@ class _SurveyFormState extends State<SurveyForm> {
                       ? () => setState(() => currentStep++)
                       : null)
                       : (canProceedStep3
-                      ? () => showThankYouDialog()
+                      ? _submitSurvey
                       : null),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,

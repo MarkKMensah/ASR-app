@@ -58,7 +58,7 @@ class LegonintroPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacementNamed(context, '/terms'),
         ),
       ),
       body: SingleChildScrollView(

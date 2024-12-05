@@ -1,7 +1,6 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -9,23 +8,36 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final _storage = FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
-    Timer(Duration(seconds: 4), () {
-      Navigator.pushReplacementNamed(context, '/welcome'); // Navigate to login
-    });
+    _navigateNext();
+  }
+
+  Future<void> _navigateNext() async {
+    // Simulate a network or token validation delay
+    await Future.delayed(const Duration(seconds: 4));
+
+    // Example: Check if the user is logged in
+    String? accessToken = await _storage.read(key: 'accessToken');
+    if (accessToken != null) {
+      Navigator.pushReplacementNamed(context, '/home'); 
+    } else {
+      Navigator.pushReplacementNamed(context, '/welcome');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               'Welcome to',
               style: TextStyle(
                 fontSize: 24,
@@ -33,14 +45,18 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: Colors.black,
               ),
             ),
-            SizedBox(height: 8), // Adds spacing between the two lines
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'ASR',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w500,
-                color: Colors.black// You can customize the color
+                color: Colors.black,
               ),
+            ),
+            const SizedBox(height: 16),
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.black), // Customize the loader color
             ),
           ],
         ),

@@ -1,8 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+  import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+
+final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
+Future<void> _login() async {
+  setState(() {
+    _isLoading = true;
+    _errorMessage = '';
+  });
+
+  final String email = _emailController.text.trim();
+  final String password = _passwordController.text;
+
+  if (email.isEmpty || password.isEmpty) {
+    setState(() {
+      _isLoading = false;
+      _errorMessage = 'Please enter both email and password.';
+    });
+    return;
+  }
+
+  try {
+    final response = await http.post(
+      Uri.parse('https://9dr0x3rr-8000.euw.devtunnels.ms/users/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    final data = json.decode(response.body);
+
+    if (response.statusCode == 200) {
+      final String accessToken = data['access_token'];
+      final String refreshToken = data['refresh_token'];
+
+      await _secureStorage.write(key: 'accessToken', value: accessToken);
+      await _secureStorage.write(key: 'refreshToken', value: refreshToken);
+
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Login failed. Please try again.';
+      });
+    }
+  } catch (e) {
+    print('Login Error: $e');
+    setState(() {
+      _isLoading = false;
+      _errorMessage = 'An unexpected error occurred.';
+    });
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +97,7 @@ class LoginPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             TextField(
+              controller: _emailController,
               decoration: InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(
@@ -39,6 +107,7 @@ class LoginPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Password',
@@ -48,17 +117,13 @@ class LoginPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 24),
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: SizedBox(
+            if (_isLoading)
+              CircularProgressIndicator() // Show loading indicator while waiting
+            else
+              SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-
-                    Navigator.pushReplacementNamed(context, '/home');
-                  },
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -76,54 +141,17 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: 16), // Spacing
-
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    print("sign up with google pressed");
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 90, vertical: 16),
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min, // This will make the Row wrap its contents
-                    mainAxisAlignment: MainAxisAlignment.center, // Center the children
-                    children: [
-                      Image.asset(
-                        'assets/google.png', // Make sure to add this to your pubspec.yaml
-                        height: 24, // Adjust size as needed
-                        width: 24,
-                      ),
-                      SizedBox(width: 12), // Add some spacing between logo and text
-                      Text(
-                        'Log in with google',
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        textAlign: TextAlign.center,
-
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
+            SizedBox(height: 16),
+            // Display error message if any
+            if (_errorMessage.isNotEmpty)
+              Text(
+                _errorMessage,
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
                 ),
               ),
-            ),
-            SizedBox(height: 24),
+            SizedBox(height: 16), // Spacing
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
