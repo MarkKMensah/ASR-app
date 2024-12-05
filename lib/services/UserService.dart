@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:asr_data/models/UserDetails.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
