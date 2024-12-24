@@ -16,7 +16,7 @@ class _HomecontentPageState extends State<HomecontentPage> {
         Container(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('assets/micro.jpg'), // Add your image to assets
+              image: const AssetImage('assets/micro.jpg'), // Add your image to assets
               fit: BoxFit.cover,
               colorFilter: ColorFilter.mode(
                 Colors.white.withOpacity(0.5),
@@ -49,9 +49,9 @@ class _HomecontentPageState extends State<HomecontentPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 20),
-                Text(
-                  'Welcome Emmanuel!',
+                const SizedBox(height: 20),
+                const Text(
+                  'Welcome!',
                   overflow: TextOverflow.visible,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -60,8 +60,8 @@ class _HomecontentPageState extends State<HomecontentPage> {
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 10),
-                Text(
+                const SizedBox(height: 10),
+                const Text(
                   'Your stats',
                   textAlign: TextAlign.left,
                   style: TextStyle(
@@ -70,8 +70,8 @@ class _HomecontentPageState extends State<HomecontentPage> {
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 16),
-                Row(
+                const SizedBox(height: 16),
+                const Row(
                   children: [
                     Text(
                       '12 ',
@@ -111,7 +111,7 @@ class _HomecontentPageState extends State<HomecontentPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
               ],
             ),
           ),

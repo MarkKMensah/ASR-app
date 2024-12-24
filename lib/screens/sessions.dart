@@ -1,10 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 import 'dart:io';
 
 class SessionScreen extends StatefulWidget {
+  const SessionScreen({super.key});
+
   @override
   _SessionScreenState createState() => _SessionScreenState();
 }
@@ -12,12 +19,14 @@ class SessionScreen extends StatefulWidget {
 class _SessionScreenState extends State<SessionScreen> {
   final record = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String? _audioPath;
   bool _isRecording = false;
   String _errorMessage = '';
   Duration _recordDuration = Duration.zero;
   List<Map<String, dynamic>> prompts = [];
   int currentPromptIndex = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,21 +34,61 @@ class _SessionScreenState extends State<SessionScreen> {
     _loadPrompts();
     _checkPermissions();
     _startTimer();
+    _uploadRecording();
+    _generateUniqueId();
   }
 
   Future<void> _loadPrompts() async {
-    setState(() {
-      prompts = [
-        {"title": "Dwen Hwɛ Kan", "english": "Think before you speak"},
-        {"title": "Me ma wo akye", "english": "Good morning"},
-        {"title": "Wo ho te sɛn", "english": "How are you?"},
-        {"title": "Me da wo ase", "english": "Thank you"},
-        {"title": "Yɛ bɛ hyia bio", "english": "We'll meet again"},
-        {"title": "Me te aseɛ", "english": "I understand"},
-        {"title": "Me suro", "english": "I am afraid"},
-        {"title": "Ɛyɛ", "english": "It is good"}
-      ];
-    });
+    try {
+      final String? token = await _secureStorage.read(key: 'accessToken');
+
+      if (token == null) {
+        setState(() {
+          _errorMessage = 'Not authenticated';
+          _isLoading = false;
+        });
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(
+            'https://akan-recorder-backend-y5er.onrender.com/texts/random'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          prompts = data
+              .map((prompt) => {
+                    'title': prompt['content'],
+                    'english': prompt['translation'],
+                    'id': prompt['id'],
+                    'prerecord': prompt['prerecord'],
+                    'created_at': prompt['created_at'],
+                  })
+              .toList();
+          _isLoading = false;
+        });
+      } else if (response.statusCode == 401) {
+        // Token expired or invalid
+        Navigator.pushReplacementNamed(context, '/login');
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load prompts';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading prompts: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   void _startTimer() {
@@ -85,7 +134,8 @@ class _SessionScreenState extends State<SessionScreen> {
       }
 
       final directory = await getApplicationDocumentsDirectory();
-      final path = '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final uniqueId = _generateUniqueId();
+      final path = '${directory.path}/audio_$uniqueId.m4a';
 
       await record.start(
         const RecordConfig(
@@ -109,6 +159,13 @@ class _SessionScreenState extends State<SessionScreen> {
         _isRecording = false;
       });
     }
+  }
+
+  String _generateUniqueId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final random = Random();
+    return List.generate(10, (index) => chars[random.nextInt(chars.length)])
+        .join();
   }
 
   Future<void> _stopRecording() async {
@@ -162,6 +219,83 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
+    Future<void> _uploadRecording() async {
+    try {
+      setState(() {
+        _errorMessage = '';
+      });
+
+      if (_audioPath == null) {
+        setState(() {
+          _errorMessage = 'No recording to upload';
+        });
+        return;
+      }
+
+      final String? token = await _secureStorage.read(key: 'accessToken');
+      if (token == null) {
+        setState(() {
+          _errorMessage = 'Not authenticated';
+        });
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+        // Create multipart request
+        final url = Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/')
+            .replace(queryParameters: {'text_id': prompts[currentPromptIndex]['id'].toString()});
+
+        // Create multipart request
+        var request = http.MultipartRequest('POST', url);
+
+        // Add authorization header
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+        });
+
+        // Add the audio file with unique filename
+        final file = File(_audioPath!);
+        final fileStream = http.ByteStream(file.openRead());
+        final fileLength = await file.length();
+        final uniqueId = _generateUniqueId();
+
+        final multipartFile = http.MultipartFile(
+          'file', // Match the field name expected by the backend
+          fileStream,
+          fileLength,
+          filename: '$uniqueId.wav',
+        );
+
+        request.files.add(multipartFile);
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // Success - move to next prompt or finish
+        if (currentPromptIndex < prompts.length - 1) {
+          setState(() {
+            currentPromptIndex++;
+            _audioPath = null;
+          });
+        } else {
+          Navigator.pushNamed(context, "/home");
+        }
+      } else if (response.statusCode == 401) {
+        Navigator.pushReplacementNamed(context, '/login');
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to upload recording: ${response.body}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error uploading recording: $e';
+      });
+    }
+  }
+
   @override
   void dispose() {
     record.dispose();
@@ -171,16 +305,24 @@ class _SessionScreenState extends State<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pushNamed(context, "/home"),
         ),
-        title: Text(
+        title: const Text(
           'Session 1',
           style: TextStyle(
             color: Colors.black,
@@ -194,7 +336,7 @@ class _SessionScreenState extends State<SessionScreen> {
             padding: const EdgeInsets.only(right: 16.0),
             child: Text(
               '${currentPromptIndex + 1}/${prompts.length}',
-              style: TextStyle(color: Colors.black, fontSize: 16),
+              style: const TextStyle(color: Colors.black, fontSize: 16),
             ),
           ),
         ],
@@ -207,54 +349,54 @@ class _SessionScreenState extends State<SessionScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(
                 prompts.length,
-                    (index) => Expanded(
+                (index) => Expanded(
                   child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 2),
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
                     height: 4,
                     decoration: BoxDecoration(
-                      color: index <= currentPromptIndex ? Colors.black : Colors.grey[300],
+                      color: index <= currentPromptIndex
+                          ? Colors.black
+                          : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 24),
-
-            if (prompts.isNotEmpty) Column(
-              children: [
-                Text(
-                  prompts[currentPromptIndex]['title'],
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(height: 24),
+            if (prompts.isNotEmpty)
+              Column(
+                children: [
+                  Text(
+                    prompts[currentPromptIndex]['title'],
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  prompts[currentPromptIndex]['english'],
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
+                  const SizedBox(height: 8),
+                  Text(
+                    prompts[currentPromptIndex]['english'],
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
-
+                ],
+              ),
+            const SizedBox(height: 24),
             if (_errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
                   _errorMessage,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.red,
                     fontSize: 14,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
-
             Container(
               height: 190,
               decoration: BoxDecoration(
@@ -269,8 +411,8 @@ class _SessionScreenState extends State<SessionScreen> {
                       _isRecording
                           ? 'Recording... ${_formatDuration(_recordDuration)}'
                           : _audioPath != null
-                          ? 'Recording saved'
-                          : 'Ready to record',
+                              ? 'Recording saved'
+                              : 'Ready to record',
                       style: TextStyle(
                         fontSize: 24,
                         color: Colors.grey[700],
@@ -278,15 +420,14 @@ class _SessionScreenState extends State<SessionScreen> {
                     ),
                     if (_audioPath != null && !_isRecording)
                       IconButton(
-                        icon: Icon(Icons.play_arrow),
+                        icon: const Icon(Icons.play_arrow),
                         onPressed: _playAudio,
                       ),
                   ],
                 ),
               ),
             ),
-            Spacer(),
-
+            const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -294,7 +435,9 @@ class _SessionScreenState extends State<SessionScreen> {
                   icon: Icon(
                     Icons.delete,
                     size: 32,
-                    color: _audioPath != null ? Colors.grey[700] : Colors.grey[300],
+                    color: _audioPath != null
+                        ? Colors.grey[700]
+                        : Colors.grey[300],
                   ),
                   onPressed: _audioPath != null ? _deleteRecording : null,
                 ),
@@ -308,27 +451,36 @@ class _SessionScreenState extends State<SessionScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(
-                    Icons.send,
-                    size: 32,
-                    color: _audioPath != null ? Colors.grey[700] : Colors.grey[300],
-                  ),
-                  onPressed: _audioPath != null
-                      ? () {
-                    if (currentPromptIndex < prompts.length - 1) {
-                      setState(() {
-                        currentPromptIndex++;
-                        _audioPath = null;
-                      });
-                    } else {
-                      Navigator.pushNamed(context, "/home");
-                    }
-                  }
+                    icon: Icon(
+                      Icons.send,
+                      size: 32,
+                      color: _audioPath != null
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
+                    ),
+                    onPressed: _audioPath != null
+                      ? () async {
+                          try {
+                            await _uploadRecording();
+                            if (!mounted) return;
+                            
+                            if (currentPromptIndex < prompts.length - 1) {
+                              setState(() {
+                                currentPromptIndex++;
+                                _audioPath = null;
+                              });
+                            } else {
+                              Navigator.pushNamed(context, "/home");
+                            }
+                          } catch (e) {
+                            // Handle error
+                          }
+                        }
                       : null,
-                ),
+                  ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
           ],
         ),
       ),

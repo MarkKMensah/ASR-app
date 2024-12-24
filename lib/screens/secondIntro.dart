@@ -26,7 +26,7 @@ class _IntroScreenState extends State<IntroScreen> {
                 _currentPage = index;
               });
             },
-            children: [
+            children: const [
               // First Page
               IntroPage(
                 image: 'assets/ghana.png', // Add your Ghana map image

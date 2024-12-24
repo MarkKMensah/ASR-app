@@ -16,7 +16,7 @@ class UserDetailsModel {
   Map<String, dynamic> toJson() => {
     'institution_occupation': institutionOccupation,
     'native_language': nativeLanguage,
-    'proficiency': proficiency,
+    'proficiency': proficiency.toString(),
     'gender': gender,
     'date_of_birth': dateOfBirth.toIso8601String(),
   };

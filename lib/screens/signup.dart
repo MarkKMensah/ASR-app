@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
@@ -73,7 +75,7 @@ Future<void> _signUp() async {
     Navigator.pushReplacementNamed(context, '/brief');
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
+      SnackBar(content: Text('Signup failed')),
     );
   } finally {
     setState(() => _isLoading = false);
@@ -82,7 +84,7 @@ Future<void> _signUp() async {
 
 Future<Map<String, dynamic>> _signUpApiCall(Map<String, dynamic> payload) async {
   final response = await http.post(
-    Uri.parse('https://9dr0x3rr-8000.euw.devtunnels.ms/users/signup'),
+    Uri.parse('https://akan-recorder-backend-y5er.onrender.com/users/signup'),
     headers: {'Content-Type': 'application/json; charset=UTF-8'},
     body: json.encode(payload),
   );
@@ -95,7 +97,7 @@ Future<Map<String, dynamic>> _signUpApiCall(Map<String, dynamic> payload) async 
 }
 
 
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
 
 // Save tokens
 Future<void> saveTokens(String accessToken, String refreshToken) async {

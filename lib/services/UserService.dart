@@ -4,13 +4,13 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class UserDetailsService {
-  final String baseUrl = 'http://your-backend-url.com/user_details/';
-  final storage = const FlutterSecureStorage();
+  final String baseUrl = 'https://akan-recorder-backend-y5er.onrender.com/user_details/';
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   Future<bool> submitUserDetails(UserDetailsModel userDetails) async {
     try {
       // Get the access token from secure storage
-      final accessToken = await storage.read(key: 'access_token');
+      final accessToken = await storage.read(key: 'accessToken');
       if (accessToken == null) {
         throw Exception('No access token found');
       }
@@ -25,6 +25,7 @@ class UserDetailsService {
       );
 
       if (response.statusCode == 200) {
+        await storage.write(key: 'details', value: 'true');
         return true;
       } else {
         // Parse error message from the backend

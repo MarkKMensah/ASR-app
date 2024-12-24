@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:asr_data/screens/briefing.dart';
 import 'package:asr_data/screens/home.dart';
 import 'package:asr_data/screens/intro.dart';
@@ -6,41 +7,74 @@ import 'package:asr_data/screens/login.dart';
 import 'package:asr_data/screens/secondIntro.dart';
 import 'package:asr_data/screens/sessions.dart';
 import 'package:asr_data/screens/signup.dart';
-import 'package:asr_data/screens/splashScreen.dart';
 import 'package:asr_data/screens/survey.dart';
 import 'package:asr_data/screens/terms.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
-
-
-
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
-      initialRoute: '/splash', // Initial route
+      initialRoute: '/welcome', // Initial route
       routes: {
-        '/': (context) => SplashScreen(),
-        '/splash': (context) => SplashScreen(),
-        '/welcome': (context) => WelcomeScreen(),
-        '/intro' : (context) => IntroScreen(),
-        '/login': (context) => LoginPage(),
-        '/signup': (context) => SignUpPage(),
-        '/brief' : (context) => BriefingPage(),
-        '/home': (context) => HomeScreen(),
-        '/session': (context) => SessionScreen(),
-        '/terms': (context) => TermsPage(),
-        '/legon': (context) => LegonintroPage(),
-        '/survey': (context) => SurveyForm()
-
+        '/welcome': (context) => const WelcomeScreen(),
+        '/intro': (context) => const IntroScreen(),
+        '/login': (context) => const LoginPage(),
+        '/signup': (context) => const SignUpPage(),
+        '/brief': (context) => const BriefingPage(),
+        '/home': (context) => const HomeScreen(),
+        '/session': (context) => const SessionScreen(),
+        '/terms': (context) => const TermsPage(),
+        '/legon': (context) => const LegonintroPage(),
+        '/survey': (context) => const SurveyForm(),
       },
+    );
+  }
+}
+
+class WelcomeScreen extends StatefulWidget {
+  const WelcomeScreen({super.key});
+
+  @override
+  _WelcomeScreenState createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _navigateNext();
+  }
+
+Future<void> _navigateNext() async {
+  String? accessToken = await _storage.read(key: 'accessToken');
+  if (accessToken != null) {
+    Navigator.pushReplacementNamed(context, '/home');
+  } else {
+    Navigator.pushReplacementNamed(context, '/intro');
+  }
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+          
+        ), // Show a loading indicator while waiting
+      ),
     );
   }
 }

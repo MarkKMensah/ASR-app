@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-  import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,10 +16,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String _errorMessage = '';
 
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
-
-Future<void> _login() async {
+  Future<void> _login() async {
   setState(() {
     _isLoading = true;
     _errorMessage = '';
@@ -38,12 +37,14 @@ Future<void> _login() async {
 
   try {
     final response = await http.post(
-      Uri.parse('https://9dr0x3rr-8000.euw.devtunnels.ms/users/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'email': email,
+      Uri.parse('https://akan-recorder-backend-y5er.onrender.com/users/login'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        'username': email,
         'password': password,
-      }),
+      },
     );
 
     final data = json.decode(response.body);
@@ -51,11 +52,13 @@ Future<void> _login() async {
     if (response.statusCode == 200) {
       final String accessToken = data['access_token'];
       final String refreshToken = data['refresh_token'];
+      final bool details = data['confirmed_details'];
 
       await _secureStorage.write(key: 'accessToken', value: accessToken);
       await _secureStorage.write(key: 'refreshToken', value: refreshToken);
+      await _secureStorage.write(key: 'details', value: details.toString());
 
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushNamed(context, '/home');
     } else {
       setState(() {
         _isLoading = false;
@@ -71,6 +74,19 @@ Future<void> _login() async {
   }
 }
 
+
+// Future<void> _routing() async {
+//   _login();
+//   String? details = await _secureStorage.read(key: 'details');
+
+//   // Ensure the 'details' value is checked correctly
+//   if (details == 'true') {
+//     Navigator.pushNamed(context, '/home');
+//   } else {
+//     Navigator.pushNamed(context, '/survey');
+//   }
+// }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,8 +96,8 @@ Future<void> _login() async {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 50),
-            Text(
+            const SizedBox(height: 50),
+            const Text(
               'Welcome Back!',
               style: TextStyle(
                 fontSize: 24,
@@ -89,13 +105,13 @@ Future<void> _login() async {
                 color: Colors.black,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Image.asset(
               'assets/asr_logo.jpg', // Replace with your image asset
               height: 80,
               fit: BoxFit.cover,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: _emailController,
               decoration: InputDecoration(
@@ -105,7 +121,7 @@ Future<void> _login() async {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
               obscureText: true,
@@ -116,9 +132,9 @@ Future<void> _login() async {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             if (_isLoading)
-              CircularProgressIndicator() // Show loading indicator while waiting
+              const CircularProgressIndicator() // Show loading indicator while waiting
             else
               SizedBox(
                 width: double.infinity,
@@ -141,17 +157,17 @@ Future<void> _login() async {
                   ),
                 ),
               ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             // Display error message if any
             if (_errorMessage.isNotEmpty)
               Text(
                 _errorMessage,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.red,
                   fontSize: 14,
                 ),
               ),
-            SizedBox(height: 16), // Spacing
+            const SizedBox(height: 16), // Spacing
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -166,7 +182,7 @@ Future<void> _login() async {
                   onTap: () {
                     Navigator.pushNamed(context, '/signup');
                   },
-                  child: Text(
+                  child: const Text(
                     'Sign up',
                     style: TextStyle(
                       fontSize: 14,
@@ -177,7 +193,7 @@ Future<void> _login() async {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
           ],
         ),
       ),
