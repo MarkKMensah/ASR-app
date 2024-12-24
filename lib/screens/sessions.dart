@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'dart:io';
 
+
 class SessionScreen extends StatefulWidget {
   const SessionScreen({super.key});
 
@@ -27,6 +28,8 @@ class _SessionScreenState extends State<SessionScreen> {
   List<Map<String, dynamic>> prompts = [];
   int currentPromptIndex = 0;
   bool _isLoading = true;
+  bool _isSubmitting = false;
+  Map<int, String> _promptRecordings = {};
 
   @override
   void initState() {
@@ -56,12 +59,12 @@ class _SessionScreenState extends State<SessionScreen> {
             'https://akan-recorder-backend-y5er.onrender.com/texts/random'),
         headers: {
           'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
         },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           prompts = data
               .map((prompt) => {
@@ -175,6 +178,8 @@ class _SessionScreenState extends State<SessionScreen> {
         _isRecording = false;
         _audioPath = path;
         _errorMessage = '';
+        // Store recording path with current prompt index
+        _promptRecordings[currentPromptIndex] = path!;
       });
     } catch (e) {
       setState(() {
@@ -190,7 +195,7 @@ class _SessionScreenState extends State<SessionScreen> {
         await _audioPlayer.play(DeviceFileSource(_audioPath!));
       } else {
         setState(() {
-          _errorMessage = 'No audio to play';
+          _errorMessage = '';
         });
       }
     } catch (e) {
@@ -227,7 +232,7 @@ class _SessionScreenState extends State<SessionScreen> {
 
       if (_audioPath == null) {
         setState(() {
-          _errorMessage = 'No recording to upload';
+          _errorMessage = '';
         });
         return;
       }
@@ -296,6 +301,72 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
+
+  Future<void> _uploadAllRecordings() async {
+    try {
+      setState(() {
+        _isSubmitting = true;
+        _errorMessage = '';
+      });
+
+      final String? token = await _secureStorage.read(key: 'accessToken');
+      if (token == null) {
+        setState(() {
+          _errorMessage = 'Not authenticated';
+          _isSubmitting = false;
+        });
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      // Upload each recording
+      for (var entry in _promptRecordings.entries) {
+        final promptIndex = entry.key;
+        final audioPath = entry.value;
+        final promptId = prompts[promptIndex]['id'].toString();
+
+        final url = Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/')
+            .replace(queryParameters: {'text_id': promptId});
+
+        var request = http.MultipartRequest('POST', url);
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+        });
+
+        final file = File(audioPath);
+        final fileStream = http.ByteStream(file.openRead());
+        final fileLength = await file.length();
+        final uniqueId = _generateUniqueId();
+
+        final multipartFile = http.MultipartFile(
+          'file',
+          fileStream,
+          fileLength,
+          filename: '$uniqueId.wav',
+        );
+
+        request.files.add(multipartFile);
+
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode != 201 && response.statusCode != 200) {
+          throw Exception('Failed to upload recording ${promptIndex + 1}: ${response.body}');
+        }
+      }
+
+      // All uploads successful, navigate to home
+      if (mounted) {
+        Navigator.pushNamed(context, "/home");
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error uploading recordings: $e';
+        _isSubmitting = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     record.dispose();
@@ -308,7 +379,9 @@ class _SessionScreenState extends State<SessionScreen> {
     if (_isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+          ),
         ),
       );
     }
@@ -385,18 +458,6 @@ class _SessionScreenState extends State<SessionScreen> {
                 ],
               ),
             const SizedBox(height: 24),
-            if (_errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  _errorMessage,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
             Container(
               height: 190,
               decoration: BoxDecoration(
@@ -427,6 +488,22 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
               ),
             ),
+            if (_isSubmitting)
+                    const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.black,
+                      ),
+                    ),
+
+                  // Show error message if any
+                  if (_errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -451,33 +528,28 @@ class _SessionScreenState extends State<SessionScreen> {
                   ),
                 ),
                 IconButton(
-                    icon: Icon(
-                      Icons.send,
-                      size: 32,
-                      color: _audioPath != null
-                          ? Colors.grey[700]
-                          : Colors.grey[300],
-                    ),
-                    onPressed: _audioPath != null
+                  icon: Icon(
+                    Icons.send,
+                    size: 32,
+                    color: _audioPath != null && !_isRecording
+                        ? Colors.grey[700]
+                        : Colors.grey[300], // Disable button when recording
+                  ),
+                  onPressed: _audioPath != null && !_isRecording
                       ? () async {
-                          try {
-                            await _uploadRecording();
-                            if (!mounted) return;
-                            
-                            if (currentPromptIndex < prompts.length - 1) {
-                              setState(() {
-                                currentPromptIndex++;
-                                _audioPath = null;
-                              });
-                            } else {
-                              Navigator.pushNamed(context, "/home");
-                            }
-                          } catch (e) {
-                            // Handle error
+                          if (currentPromptIndex < prompts.length - 1) {
+                            // Move to next prompt without uploading
+                            setState(() {
+                              currentPromptIndex++;
+                              _audioPath = null;
+                            });
+                          } else {
+                            // On last prompt, upload all recordings
+                            await _uploadAllRecordings();
                           }
                         }
-                      : null,
-                  ),
+                      : null, // Disable action when recording
+                ),
               ],
             ),
             const SizedBox(height: 16),

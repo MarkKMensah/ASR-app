@@ -134,7 +134,9 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 24),
             if (_isLoading)
-              const CircularProgressIndicator() // Show loading indicator while waiting
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              ) // Show loading indicator while waiting
             else
               SizedBox(
                 width: double.infinity,

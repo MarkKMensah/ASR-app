@@ -75,7 +75,7 @@ Future<void> _signUp() async {
     Navigator.pushReplacementNamed(context, '/brief');
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Signup failed')),
+      SnackBar(content: Text('Signup failed ${e.toString()}')),
     );
   } finally {
     setState(() => _isLoading = false);

@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
 class HomecontentPage extends StatefulWidget {
   const HomecontentPage({super.key});
@@ -8,6 +13,83 @@ class HomecontentPage extends StatefulWidget {
 }
 
 class _HomecontentPageState extends State<HomecontentPage> {
+  int _sessions = 0;
+  int _phrases = 0;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+  try {
+    final String? token = await _secureStorage.read(key: 'accessToken');
+    final response = await http.get(
+      Uri.parse('https://akan-recorder-backend-y5er.onrender.com/users/stats'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final int targetSessions = data['sessions'];
+      final int targetPhrases = data['phrases_recorded'];
+
+      _startCountUpAnimation(targetSessions, targetPhrases);
+    } else {
+      if (mounted) {
+        setState(() {
+          print('Failed to fetch data from server.');
+        });
+      }
+    }
+  } catch (e) {
+    if (mounted) {
+      setState(() {
+        print('An error occurred while fetching data: $e');
+      });
+    }
+  }
+}
+
+ void _startCountUpAnimation(int targetSessions, int targetPhrases) {
+  int currentSessions = 0;
+  int currentPhrases = 0;
+
+  final int totalSteps = 50; // Animation will take ~2.5 seconds (50 * 50ms)
+  final int sessionStep = (targetSessions / totalSteps).ceil();
+  final int phrasesStep = (targetPhrases / totalSteps).ceil();
+
+  Timer.periodic(const Duration(milliseconds: 50), (timer) {
+    bool isComplete = true;
+
+    if (currentSessions < targetSessions) {
+      currentSessions = (currentSessions + sessionStep).clamp(0, targetSessions);
+      isComplete = false;
+    }
+
+    if (currentPhrases < targetPhrases) {
+      currentPhrases = (currentPhrases + phrasesStep).clamp(0, targetPhrases);
+      isComplete = false;
+    }
+
+    // Ensure setState is only called when the widget is still mounted
+    if (mounted) {
+      setState(() {
+        _sessions = currentSessions;
+        _phrases = currentPhrases;
+      });
+    }
+
+    if (isComplete) {
+      timer.cancel();
+    }
+  });
+}
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -16,7 +98,7 @@ class _HomecontentPageState extends State<HomecontentPage> {
         Container(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: const AssetImage('assets/micro.jpg'), // Add your image to assets
+              image: const AssetImage('assets/micro.jpg'),
               fit: BoxFit.cover,
               colorFilter: ColorFilter.mode(
                 Colors.white.withOpacity(0.5),
@@ -71,43 +153,47 @@ class _HomecontentPageState extends State<HomecontentPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Row(
+                Row(
                   children: [
                     Text(
-                      '12 ',
+                      '$_sessions ',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 72,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 72,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    Text(
+                    const Text(
                       'sessions',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 55,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600),
+                        fontSize: 55,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
                 Row(
                   children: [
                     Text(
-                      '96 ',
+                      '$_phrases ',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 72,
-                          color: Colors.black.withOpacity(0.9),
-                          fontWeight: FontWeight.w600),
+                        fontSize: 72,
+                        color: Colors.black.withOpacity(0.9),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       'phrases',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 55,
-                          color: Colors.black.withOpacity(0.9),
-                          fontWeight: FontWeight.w600),
+                        fontSize: 55,
+                        color: Colors.black.withOpacity(0.9),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),

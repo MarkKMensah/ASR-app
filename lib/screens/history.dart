@@ -3,7 +3,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
@@ -24,7 +23,6 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<String?> _getToken() async {
-    
     final String? token = await _secureStorage.read(key: 'accessToken');
     return token;
   }
@@ -32,15 +30,16 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<TextItem?> fetchText(int textId, String token) async {
     try {
       final response = await http.get(
-        Uri.parse('https://akan-recorder-backend-y5er.onrender.com/texts/$textId'),
+        Uri.parse(
+            'https://akan-recorder-backend-y5er.onrender.com/texts/$textId'),
         headers: {
           'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
         },
       );
 
       if (response.statusCode == 200) {
-        return TextItem.fromJson(json.decode(response.body));
+        return TextItem.fromJson(json.decode(utf8.decode(response.bodyBytes)));
       }
     } catch (e) {
       print('Error fetching text $textId: $e');
@@ -48,59 +47,69 @@ class _HistoryPageState extends State<HistoryPage> {
     return null;
   }
 
-  Future<void> fetchRecordingsAndTexts() async {
-    try {
-      final token = await _getToken();
-      if (token == null) {
+Future<void> fetchRecordingsAndTexts() async {
+  try {
+    final token = await _getToken();
+    if (token == null) {
+      if (mounted) {
         setState(() {
           error = 'Not authenticated';
           isLoading = false;
         });
-        return;
+      }
+      return;
+    }
+
+    final response = await http.get(
+      Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      final List<RecordingWithText> recordingsWithText = [];
+
+      for (var recordingData in data) {
+        final recording = RecordingItem.fromJson(recordingData);
+        final text = await fetchText(recording.textId, token);
+        if (text != null) {
+          recordingsWithText.add(RecordingWithText(recording: recording, text: text));
+        }
       }
 
-      final response = await http.get(
-        Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/me'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        final List<RecordingWithText> recordingsWithText = [];
-
-        for (var recordingData in data) {
-          final recording = RecordingItem.fromJson(recordingData);
-          final text = await fetchText(recording.textId, token);
-          if (text != null) {
-            recordingsWithText.add(RecordingWithText(recording: recording, text: text));
-          }
-        }
-
+      if (mounted) {
         setState(() {
           recordings = recordingsWithText;
           isLoading = false;
         });
-      } else if (response.statusCode == 401) {
+      }
+    } else if (response.statusCode == 401) {
+      if (mounted) {
         setState(() {
           error = 'Session expired. Please login again';
           isLoading = false;
         });
-      } else {
+      }
+    } else {
+      if (mounted) {
         setState(() {
           error = 'Failed to load recordings';
           isLoading = false;
         });
       }
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       setState(() {
         error = 'Network error';
         isLoading = false;
       });
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -119,13 +128,16 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+          ))
           : error != null
               ? Center(child: Text(error!))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: recordings.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final item = recordings[index];
                     return ListTile(
@@ -144,14 +156,6 @@ class _HistoryPageState extends State<HistoryPage> {
                             item.text.translation,
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.recording.createdAt,
-                            style: const TextStyle(
-                              fontSize: 12,
                               color: Colors.grey,
                             ),
                           ),
@@ -196,25 +200,16 @@ class RecordingItem {
 class TextItem {
   final String content;
   final String translation;
-  final String prerecord;
-  final int id;
-  final String createdAt;
 
   TextItem({
     required this.content,
     required this.translation,
-    required this.prerecord,
-    required this.id,
-    required this.createdAt,
   });
 
   factory TextItem.fromJson(Map<String, dynamic> json) {
     return TextItem(
       content: json['content'] ?? '',
       translation: json['translation'] ?? '',
-      prerecord: json['prerecord'] ?? '',
-      id: json['id'] ?? 0,
-      createdAt: json['created_at'] ?? '',
     );
   }
 }

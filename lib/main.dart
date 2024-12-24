@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/welcome', // Initial route
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
+        '/firstintro': (context) => const FirstWelcomeScreen(),
         '/intro': (context) => const IntroScreen(),
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignUpPage(),
@@ -62,7 +63,7 @@ Future<void> _navigateNext() async {
   if (accessToken != null) {
     Navigator.pushReplacementNamed(context, '/home');
   } else {
-    Navigator.pushReplacementNamed(context, '/intro');
+    Navigator.pushReplacementNamed(context, '/firstintro');
   }
 }
 
