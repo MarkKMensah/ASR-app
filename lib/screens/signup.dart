@@ -75,7 +75,7 @@ Future<void> _signUp() async {
     Navigator.pushReplacementNamed(context, '/brief');
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Signup failed ${e.toString()}')),
+      SnackBar(content: Text('Signup failed')),
     );
   } finally {
     setState(() => _isLoading = false);
@@ -84,7 +84,7 @@ Future<void> _signUp() async {
 
 Future<Map<String, dynamic>> _signUpApiCall(Map<String, dynamic> payload) async {
   final response = await http.post(
-    Uri.parse('https://akan-recorder-backend-y5er.onrender.com/users/signup'),
+    Uri.parse('https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/users/signup'),
     headers: {'Content-Type': 'application/json; charset=UTF-8'},
     body: json.encode(payload),
   );
@@ -231,43 +231,43 @@ Future<void> deleteTokens() async {
                 ),
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          print("sign up with google pressed");
-                        },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 80, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/google.png',
-                        height: 24,
-                        width: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Sign up with google',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: OutlinedButton(
+              //     onPressed: _isLoading
+              //         ? null
+              //         : () {
+              //             print("sign up with google pressed");
+              //           },
+              //     style: OutlinedButton.styleFrom(
+              //       padding: const EdgeInsets.symmetric(
+              //           horizontal: 80, vertical: 16),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(8),
+              //       ),
+              //     ),
+              //     child: Row(
+              //       mainAxisSize: MainAxisSize.min,
+              //       mainAxisAlignment: MainAxisAlignment.center,
+              //       children: [
+              //         Image.asset(
+              //           'assets/google.png',
+              //           height: 24,
+              //           width: 24,
+              //         ),
+              //         const SizedBox(width: 12),
+              //         const Text(
+              //           'Sign up with google',
+              //           style: TextStyle(
+              //             fontSize: 16,
+              //             fontWeight: FontWeight.bold,
+              //             color: Colors.black,
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

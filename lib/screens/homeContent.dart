@@ -27,7 +27,7 @@ class _HomecontentPageState extends State<HomecontentPage> {
   try {
     final String? token = await _secureStorage.read(key: 'accessToken');
     final response = await http.get(
-      Uri.parse('https://akan-recorder-backend-y5er.onrender.com/users/stats'),
+      Uri.parse('https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/users/stats'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json; charset=UTF-8',

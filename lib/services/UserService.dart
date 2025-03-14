@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class UserDetailsService {
-  final String baseUrl = 'https://akan-recorder-backend-y5er.onrender.com/user_details/';
+  final String baseUrl = 'https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/user_details/';
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   Future<bool> submitUserDetails(UserDetailsModel userDetails) async {

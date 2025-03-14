@@ -9,7 +9,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'dart:io';
 
-
 class SessionScreen extends StatefulWidget {
   const SessionScreen({super.key});
 
@@ -20,6 +19,7 @@ class SessionScreen extends StatefulWidget {
 class _SessionScreenState extends State<SessionScreen> {
   final record = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _prerecordPlayer = AudioPlayer();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String? _audioPath;
   bool _isRecording = false;
@@ -30,6 +30,7 @@ class _SessionScreenState extends State<SessionScreen> {
   bool _isLoading = true;
   bool _isSubmitting = false;
   Map<int, String> _promptRecordings = {};
+  bool _isPlayingPrerecord = false;
 
   @override
   void initState() {
@@ -56,7 +57,7 @@ class _SessionScreenState extends State<SessionScreen> {
 
       final response = await http.get(
         Uri.parse(
-            'https://akan-recorder-backend-y5er.onrender.com/texts/random'),
+            'https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/texts/random'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json; charset=UTF-8',
@@ -82,15 +83,102 @@ class _SessionScreenState extends State<SessionScreen> {
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         setState(() {
-          _errorMessage = 'Failed to load prompts';
+          _errorMessage =
+              'Failed to load prompts. Status code: ${response.statusCode}';
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error loading prompts: $e';
+        if (e is SocketException) {
+          _errorMessage =
+              'Network error: Please check your internet connection.';
+        } else {
+          _errorMessage = 'Error loading prompts: $e';
+        }
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _playPrerecordedAudio() async {
+  try {
+    final prerecordUrl = prompts[currentPromptIndex]['prerecord'];
+
+    if (prerecordUrl != 'string' && prerecordUrl.isNotEmpty) {
+      // Check if the URL is a Google Drive link and modify it accordingly
+      String downloadUrl = prerecordUrl;
+
+      if (prerecordUrl.contains('drive.google.com')) {
+        downloadUrl = _generateDownloadLink(prerecordUrl);
+      }
+
+      // Generate a local file path for the audio
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = 'prerecord_${prompts[currentPromptIndex]['id']}.mp3';
+      final localFilePath = '${directory.path}/$fileName';
+      final localFile = File(localFilePath);
+
+      // Check if the audio is already downloaded
+      if (await localFile.exists()) {
+        // If the file exists, play it from the local path
+        await _prerecordPlayer.play(DeviceFileSource(localFilePath));
+      } else {
+        // If the file doesn't exist, download it and save it locally
+        setState(() {
+          _isPlayingPrerecord = true;
+        });
+
+        final response = await http.get(Uri.parse(downloadUrl));
+        if (response.statusCode == 200) {
+          // Save the file locally
+          await localFile.writeAsBytes(response.bodyBytes);
+
+          // Play the downloaded audio from the local path
+          await _prerecordPlayer.play(DeviceFileSource(localFilePath));
+        } else {
+          setState(() {
+            _errorMessage = 'Failed to download prerecord audio (status code: ${response.statusCode})';
+            _isPlayingPrerecord = false;
+          });
+        }
+      }
+
+      // Listen for completion
+      _prerecordPlayer.onPlayerComplete.listen((event) {
+        setState(() {
+          _isPlayingPrerecord = false;
+        });
+      });
+    } else {
+      setState(() {
+        _errorMessage =
+            'There is no available prerecorded audio for this word';
+        _isPlayingPrerecord = false;
+      });
+    }
+  } catch (e) {
+    setState(() {
+      if (e is SocketException) {
+        _errorMessage = 'Network error: Please check your internet connection.';
+      } else {
+        _errorMessage = 'Error playing prerecorded audio: $e';
+      }
+      _isPlayingPrerecord = false;
+    });
+  }
+}
+
+  String _generateDownloadLink(String baseLink) {
+    final regex =
+        RegExp(r"\/d\/([^\/]+)\/"); // Regular expression to extract the ID
+    final match = regex.firstMatch(baseLink);
+
+    if (match != null) {
+      final fileId = match.group(1); // Extract the file ID
+      return 'https://drive.usercontent.google.com/u/1/uc?id=$fileId&export=download'; // Construct the download URL
+    } else {
+      throw Exception("Invalid Google Drive link");
     }
   }
 
@@ -138,13 +226,16 @@ class _SessionScreenState extends State<SessionScreen> {
 
       final directory = await getApplicationDocumentsDirectory();
       final uniqueId = _generateUniqueId();
-      final path = '${directory.path}/audio_$uniqueId.m4a';
+      final path = '${directory.path}/ak_gh_rec_audio_${prompts[currentPromptIndex]['id']}_$uniqueId.m4a';
+
 
       await record.start(
         const RecordConfig(
           encoder: AudioEncoder.aacLc,
           bitRate: 128000,
           sampleRate: 44100,
+          echoCancel: true,
+          noiseSuppress: true,
         ),
         path: path,
       );
@@ -224,7 +315,7 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
-    Future<void> _uploadRecording() async {
+  Future<void> _uploadRecording() async {
     try {
       setState(() {
         _errorMessage = '';
@@ -246,32 +337,35 @@ class _SessionScreenState extends State<SessionScreen> {
         return;
       }
 
-        // Create multipart request
-        final url = Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/')
-            .replace(queryParameters: {'text_id': prompts[currentPromptIndex]['id'].toString()});
+      // Create multipart request
+      final url = Uri.parse(
+              'https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/recording/')
+          .replace(queryParameters: {
+        'text_id': prompts[currentPromptIndex]['id'].toString()
+      });
 
-        // Create multipart request
-        var request = http.MultipartRequest('POST', url);
+      // Create multipart request
+      var request = http.MultipartRequest('POST', url);
 
-        // Add authorization header
-        request.headers.addAll({
-          'Authorization': 'Bearer $token',
-        });
+      // Add authorization header
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
 
-        // Add the audio file with unique filename
-        final file = File(_audioPath!);
-        final fileStream = http.ByteStream(file.openRead());
-        final fileLength = await file.length();
-        final uniqueId = _generateUniqueId();
+      // Add the audio file with unique filename
+      final file = File(_audioPath!);
+      final fileStream = http.ByteStream(file.openRead());
+      final fileLength = await file.length();
+      final uniqueId = _generateUniqueId();
 
-        final multipartFile = http.MultipartFile(
-          'file', // Match the field name expected by the backend
-          fileStream,
-          fileLength,
-          filename: '$uniqueId.wav',
-        );
+      final multipartFile = http.MultipartFile(
+        'file', // Match the field name expected by the backend
+        fileStream,
+        fileLength,
+        filename: '$uniqueId.wav',
+      );
 
-        request.files.add(multipartFile);
+      request.files.add(multipartFile);
 
       // Send the request
       final streamedResponse = await request.send();
@@ -291,86 +385,107 @@ class _SessionScreenState extends State<SessionScreen> {
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         setState(() {
-          _errorMessage = 'Failed to upload recording: ${response.body}';
+          _errorMessage = 'Failed to upload recording}';
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error uploading recording: $e';
+        _errorMessage = 'Error uploading recording';
       });
     }
   }
 
+Future<void> _uploadAllRecordings() async {
+  try {
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = '';
+    });
 
-  Future<void> _uploadAllRecordings() async {
-    try {
+    final String? token = await _secureStorage.read(key: 'accessToken');
+    if (token == null) {
       setState(() {
-        _isSubmitting = true;
-        _errorMessage = '';
+        _errorMessage = 'Not authenticated';
+        _isSubmitting = false;
+      });
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    // Upload each recording
+    for (var entry in _promptRecordings.entries) {
+      final promptIndex = entry.key;
+      final audioPath = entry.value;
+      final promptId = prompts[promptIndex]['id'].toString();
+
+      final url = Uri.parse('https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/recording/')
+          .replace(queryParameters: {'text_id': promptId});
+
+      var request = http.MultipartRequest('POST', url);
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
       });
 
-      final String? token = await _secureStorage.read(key: 'accessToken');
-      if (token == null) {
+      final file = File(audioPath);
+
+      // Ensure the file exists before uploading
+      if (!await file.exists()) {
         setState(() {
-          _errorMessage = 'Not authenticated';
+          _errorMessage = 'Recording file not found: $audioPath';
           _isSubmitting = false;
         });
-        Navigator.pushReplacementNamed(context, '/login');
         return;
       }
 
-      // Upload each recording
-      for (var entry in _promptRecordings.entries) {
-        final promptIndex = entry.key;
-        final audioPath = entry.value;
-        final promptId = prompts[promptIndex]['id'].toString();
+      final fileStream = http.ByteStream(file.openRead());
+      final fileLength = await file.length();
+      final uniqueId = _generateUniqueId();
 
-        final url = Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/')
-            .replace(queryParameters: {'text_id': promptId});
+      final multipartFile = http.MultipartFile(
+        'file',
+        fileStream,
+        fileLength,
+        filename: '$uniqueId.wav',
+      );
 
-        var request = http.MultipartRequest('POST', url);
-        request.headers.addAll({
-          'Authorization': 'Bearer $token',
-        });
+      request.files.add(multipartFile);
 
-        final file = File(audioPath);
-        final fileStream = http.ByteStream(file.openRead());
-        final fileLength = await file.length();
-        final uniqueId = _generateUniqueId();
+      // Add a timeout to avoid hanging if something goes wrong
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
 
-        final multipartFile = http.MultipartFile(
-          'file',
-          fileStream,
-          fileLength,
-          filename: '$uniqueId.wav',
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+      } else {
+        // Handle failure on upload
+        throw Exception(
+          'Failed to upload recording ${promptIndex + 1}: ${response.statusCode} - ${response.body}',
         );
-
-        request.files.add(multipartFile);
-
-        final streamedResponse = await request.send();
-        final response = await http.Response.fromStream(streamedResponse);
-
-        if (response.statusCode != 201 && response.statusCode != 200) {
-          throw Exception('Failed to upload recording ${promptIndex + 1}: ${response.body}');
-        }
       }
-
-      // All uploads successful, navigate to home
-      if (mounted) {
-        Navigator.pushNamed(context, "/home");
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error uploading recordings: $e';
-        _isSubmitting = false;
-      });
     }
+
+    // All uploads successful, navigate to home
+    if (mounted) {
+      Navigator.pushNamed(context, "/home");
+    }
+  } catch (e) {
+    setState(() {
+      // Handle specific error cases more gracefully
+      if (e is SocketException) {
+        _errorMessage = 'Network error: Please check your internet connection.';
+      } else {
+        _errorMessage = 'Error uploading recordings';
+      }
+      _isSubmitting = false;
+    });
   }
+}
 
   @override
   void dispose() {
     record.dispose();
     _audioPlayer.dispose();
+    _prerecordPlayer.dispose();
     super.dispose();
   }
 
@@ -396,7 +511,7 @@ class _SessionScreenState extends State<SessionScreen> {
           onPressed: () => Navigator.pushNamed(context, "/home"),
         ),
         title: const Text(
-          'Session 1',
+          'Session',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -455,6 +570,29 @@ class _SessionScreenState extends State<SessionScreen> {
                       color: Colors.grey[600],
                     ),
                   ),
+                  if (prompts[currentPromptIndex]['prerecord'] != null &&
+                      prompts[currentPromptIndex]['prerecord'].isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            _isPlayingPrerecord ? null : _playPrerecordedAudio,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[200],
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                        ),
+                        icon: Icon(
+                          _isPlayingPrerecord ? Icons.stop : Icons.play_arrow,
+                        ),
+                        label: Text(
+                          _isPlayingPrerecord ? 'Playing...' : 'Play Example',
+                        ),
+                      ),
+                    ),
                 ],
               ),
             const SizedBox(height: 24),
@@ -489,21 +627,24 @@ class _SessionScreenState extends State<SessionScreen> {
               ),
             ),
             if (_isSubmitting)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                      ),
-                    ),
+              const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.black,
+                ),
+              ),
 
-                  // Show error message if any
-                  if (_errorMessage.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _errorMessage,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
+            // Show error message if any
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Align(
+                  alignment: Alignment.center, // Center the text
+                  child: Text(
+                    _errorMessage,
+                    style: const TextStyle(color: Colors.red, fontSize: 15),
+                  ),
+                ),
+              ),
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

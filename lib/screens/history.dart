@@ -28,24 +28,25 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<TextItem?> fetchText(int textId, String token) async {
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'https://akan-recorder-backend-y5er.onrender.com/texts/$textId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse('https://akan-recorder-backend-y5er.onrender.com/texts/$textId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        return TextItem.fromJson(json.decode(utf8.decode(response.bodyBytes)));
-      }
-    } catch (e) {
-      print('Error fetching text $textId: $e');
+    if (response.statusCode == 200) {
+      return TextItem.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+    } else {
+      print('Failed to fetch text $textId: ${response.statusCode}');
     }
-    return null;
+  } catch (e) {
+    print('Error fetching text $textId: $e');
   }
+  return null;
+}
 
 Future<void> fetchRecordingsAndTexts() async {
   try {
@@ -61,7 +62,7 @@ Future<void> fetchRecordingsAndTexts() async {
     }
 
     final response = await http.get(
-      Uri.parse('https://akan-recorder-backend-y5er.onrender.com/recording/me'),
+      Uri.parse('https://akan-asr-backend-d5ee511bc4b5.herokuapp.com/recording/me'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -72,9 +73,19 @@ Future<void> fetchRecordingsAndTexts() async {
       final List<dynamic> data = json.decode(response.body);
       final List<RecordingWithText> recordingsWithText = [];
 
-      for (var recordingData in data) {
+      // Fetch texts concurrently for all recordings
+      final List<Future<TextItem?>> textRequests = data.map((recordingData) {
         final recording = RecordingItem.fromJson(recordingData);
-        final text = await fetchText(recording.textId, token);
+        return fetchText(recording.textId, token);
+      }).toList();
+
+      // Wait for all text requests to complete
+      final List<TextItem?> texts = await Future.wait(textRequests);
+
+      // Add recordings with texts
+      for (int i = 0; i < data.length; i++) {
+        final recording = RecordingItem.fromJson(data[i]);
+        final text = texts[i];
         if (text != null) {
           recordingsWithText.add(RecordingWithText(recording: recording, text: text));
         }
@@ -104,7 +115,7 @@ Future<void> fetchRecordingsAndTexts() async {
   } catch (e) {
     if (mounted) {
       setState(() {
-        error = 'Network error';
+        error = 'Network error: Please check your internet connection.';
         isLoading = false;
       });
     }
@@ -124,7 +135,7 @@ Future<void> fetchRecordingsAndTexts() async {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
         ),
       ),
       body: isLoading

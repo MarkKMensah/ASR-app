@@ -13,7 +13,7 @@ class FirstWelcomeScreen extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: const AssetImage('assets/intro.png'), // Add your image to assets
+                image: const AssetImage('assets/intro.png'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.black.withOpacity(0),
